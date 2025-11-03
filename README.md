@@ -1,10 +1,10 @@
 # Azure Event Hub Sender Sample Application
 
-Written in C# targeting .NET Core 5.0. The application simulate IoT workload with devices' readings. 
+Written in C# targeting .NET Core 8.0. The application simulates an IoT workload with device readings.
 
 **Sample Data**
 -
-**deviceID**  Random selected from a list of device IDs hard-coded 
+**deviceID**  Random selected from a list of device IDs hard-coded
 
 **readingDate** Random recent date
 
@@ -18,9 +18,4 @@ Written in C# targeting .NET Core 5.0. The application simulate IoT workload wit
 
 **level** Random value from 0 to 50
 
-**deviceStatus** Random value of one character and two digits 
-
- 
-
-
-
+**deviceStatus** Random value of one character and two digits
