@@ -1,5 +1,5 @@
 {
+  "eventHubConnectionString": "",
   "eventHubName": "",
-  "EHConnectionString": "",
   "latencyMS": ""
 }
