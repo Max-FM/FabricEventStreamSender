@@ -1,5 +1,0 @@
-{
-  "eventHubConnectionString": "Endpoint=sb://<namespace>.servicebus.windows.net/;SharedAccessKeyName=<keyName>;SharedAccessKey=<key>;EntityPath=<eventHubName>",
-  "eventHubName": "",
-  "latencyMS": "0"
-}
