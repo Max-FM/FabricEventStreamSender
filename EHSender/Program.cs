@@ -14,8 +14,7 @@ namespace EHSender
         public static async Task Main(string[] args)
         {
             initializeConfigurations();
-            string eventHubName = GetRequiredSetting("eventHubName");
-            string eventHubConnectionString = BuildEventHubConnectionString(eventHubName);
+            string eventHubConnectionString = BuildEventHubConnectionString();
 
             int latency_ms = 0;
             int.TryParse(config["latencyMS"], out latency_ms);
@@ -63,52 +62,28 @@ namespace EHSender
                 .Build();
         }
 
-        private static string BuildEventHubConnectionString(string eventHubName)
+        private static string BuildEventHubConnectionString()
         {
-            var sharedAccessKeyName = GetRequiredSetting("sharedAccessKeyName");
-            var primaryKey = config["primaryKey"];
-            var secondaryKey = config["secondaryKey"];
-            var connectionStringPrimary = config["connectionStringPrimary"];
-            var connectionStringSecondary = config["connectionStringSecondary"];
-            var useSecondaryKeySetting = config["useSecondaryKey"];
+            var primaryConnectionString = config["connectionStringPrimary"];
+            var secondaryConnectionString = config["connectionStringSecondary"];
+            var useSecondarySetting = config["useSecondaryConnection"];
 
-            bool useSecondaryKey = false;
-            if (!string.IsNullOrWhiteSpace(useSecondaryKeySetting))
+            bool useSecondary = false;
+            if (!string.IsNullOrWhiteSpace(useSecondarySetting))
             {
-                bool.TryParse(useSecondaryKeySetting, out useSecondaryKey);
+                bool.TryParse(useSecondarySetting, out useSecondary);
             }
 
-            var selectedKey = useSecondaryKey
-                ? (!string.IsNullOrWhiteSpace(secondaryKey) ? secondaryKey : primaryKey)
-                : (!string.IsNullOrWhiteSpace(primaryKey) ? primaryKey : secondaryKey);
+            var selectedConnection = useSecondary
+                ? (!string.IsNullOrWhiteSpace(secondaryConnectionString) ? secondaryConnectionString : primaryConnectionString)
+                : (!string.IsNullOrWhiteSpace(primaryConnectionString) ? primaryConnectionString : secondaryConnectionString);
 
-            if (string.IsNullOrWhiteSpace(selectedKey))
+            if (string.IsNullOrWhiteSpace(selectedConnection))
             {
-                throw new InvalidOperationException("At least one SAS key (primary or secondary) must be provided.");
+                throw new InvalidOperationException("At least one connection string (primary or secondary) must be provided.");
             }
 
-            var endpoint = ResolveEndpoint(connectionStringPrimary, connectionStringSecondary);
-            if (string.IsNullOrWhiteSpace(endpoint))
-            {
-                throw new InvalidOperationException("Unable to resolve Event Hubs endpoint. Provide connectionStringPrimary or connectionStringSecondary.");
-            }
-
-            return $"Endpoint=sb://{endpoint}/;SharedAccessKeyName={sharedAccessKeyName};SharedAccessKey={selectedKey};EntityPath={eventHubName}";
-        }
-
-        private static string ResolveEndpoint(string connectionStringPrimary, string connectionStringSecondary)
-        {
-            var source = !string.IsNullOrWhiteSpace(connectionStringPrimary)
-                ? connectionStringPrimary
-                : connectionStringSecondary;
-
-            if (string.IsNullOrWhiteSpace(source))
-            {
-                return null;
-            }
-
-            var props = EventHubsConnectionStringProperties.Parse(source);
-            return props.FullyQualifiedNamespace;
+            return selectedConnection;
         }
 
         private static string GetRequiredSetting(string key)

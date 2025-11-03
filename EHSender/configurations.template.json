@@ -1,10 +1,6 @@
 {
-  "eventHubName": "",
-  "sharedAccessKeyName": "",
-  "primaryKey": "",
-  "secondaryKey": "",
   "connectionStringPrimary": "",
   "connectionStringSecondary": "",
-  "useSecondaryKey": "false",
+  "useSecondaryConnection": "false",
   "latencyMS": ""
 }
