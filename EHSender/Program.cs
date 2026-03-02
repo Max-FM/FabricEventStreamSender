@@ -86,15 +86,5 @@ namespace EHSender
             return selectedConnection;
         }
 
-        private static string GetRequiredSetting(string key)
-        {
-            var value = config[key];
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new InvalidOperationException($"Configuration setting '{key}' is required.");
-            }
-
-            return value;
-        }
     }
 }
