@@ -12,7 +12,7 @@ Written in C# targeting .NET Core 8.0. The application simulates an IoT workload
 
 **readingLatitude** Random latitude with range from -90 to 90
 
-**readingLogitude** Random longitude with range from -180 to 180
+**readingLongitude** Random longitude with range from -180 to 180
 
 **readingPressure** Random value from 0 to 200
 
