@@ -1,63 +1,58 @@
 ﻿using System;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
+using System.Text;
 using System.Threading.Tasks;
 using Azure.Messaging.EventHubs;
-using System.Text;
-using System.Diagnostics;
 using Azure.Messaging.EventHubs.Producer;
+using Microsoft.Extensions.Configuration;
 
 namespace EHSender
 {
     class Program
     {
         private static IConfiguration config;
-        
-        private static EventHubProducerClient eventHubClient;
+
         public static async Task Main(string[] args)
         {
             initializeConfigurations();
-            string eventHubName = config["eventHubName"];
-            string connectionString = config["EHConnectionString"];
+            string eventHubConnectionString = BuildEventHubConnectionString();
+
             int latency_ms = 0;
             int.TryParse(config["latencyMS"], out latency_ms);
 
-            Console.WriteLine("Start sending to eventHub {0}", eventHubName);
+            await using var producerClient = new EventHubProducerClient(eventHubConnectionString);
 
-            EHconnect(eventHubName, connectionString);
-
+            Console.WriteLine("Start sending to Fabric event stream endpoint using Event Hubs protocol.");
             Console.WriteLine("press CTRL+C to stop sending");
+            Console.WriteLine();
 
             long counter = 0;
-            Console.WriteLine();
-            
             while (true)
-            { 
-                await sendEHMessage("deviceID");
+            {
+                await sendEventHubMessage(producerClient);
                 counter += 1;
                 int curpos = Console.CursorTop;
                 Console.SetCursorPosition(0, curpos);
-                Console.Write("{0} messages sent",counter);
-                if(latency_ms>0)
+                Console.Write("{0} messages sent", counter);
+
+                if (latency_ms > 0)
                 {
                     System.Threading.Thread.Sleep(latency_ms);
                 }
             }
         }
 
-        private static void EHconnect(string EventHubName, string EventHubConnectionString)
+        private static async Task sendEventHubMessage(EventHubProducerClient producerClient)
         {
-            eventHubClient = new EventHubProducerClient(EventHubConnectionString, EventHubName);
-        }
-        private static async Task sendEHMessage(string partitionKey)
-        {
-            
             DataGenerator generator = new DataGenerator();
             var message = generator.generateDateJson();
-            using EventDataBatch eventBatch = await eventHubClient.CreateBatchAsync();
-            var eventData = new EventData(Encoding.UTF8.GetBytes(message));
-            eventBatch.TryAdd(eventData);
-            await eventHubClient.SendAsync(eventBatch);
+
+            using EventDataBatch eventBatch = await producerClient.CreateBatchAsync();
+            if (!eventBatch.TryAdd(new EventData(Encoding.UTF8.GetBytes(message))))
+            {
+                throw new InvalidOperationException("Event is too large for the batch.");
+            }
+
+            await producerClient.SendAsync(eventBatch);
         }
 
         private static void initializeConfigurations()
@@ -66,5 +61,30 @@ namespace EHSender
                 .AddJsonFile("configurations.json")
                 .Build();
         }
+
+        private static string BuildEventHubConnectionString()
+        {
+            var primaryConnectionString = config["connectionStringPrimary"];
+            var secondaryConnectionString = config["connectionStringSecondary"];
+            var useSecondarySetting = config["useSecondaryConnection"];
+
+            bool useSecondary = false;
+            if (!string.IsNullOrWhiteSpace(useSecondarySetting))
+            {
+                bool.TryParse(useSecondarySetting, out useSecondary);
+            }
+
+            var selectedConnection = useSecondary
+                ? (!string.IsNullOrWhiteSpace(secondaryConnectionString) ? secondaryConnectionString : primaryConnectionString)
+                : (!string.IsNullOrWhiteSpace(primaryConnectionString) ? primaryConnectionString : secondaryConnectionString);
+
+            if (string.IsNullOrWhiteSpace(selectedConnection))
+            {
+                throw new InvalidOperationException("At least one connection string (primary or secondary) must be provided.");
+            }
+
+            return selectedConnection;
+        }
+
     }
 }

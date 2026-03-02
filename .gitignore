@@ -10,6 +10,9 @@
 *.userosscache
 *.sln.docstates
 
+# Local configuration
+EHSender/configurations.json
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
@@ -338,6 +341,3 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-
-#configuration files
-EHSender/configurations.json

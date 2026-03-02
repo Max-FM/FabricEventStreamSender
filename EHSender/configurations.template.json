@@ -1,5 +1,6 @@
 {
-  "eventHubName": "",
-  "EHConnectionString": "",
+  "connectionStringPrimary": "",
+  "connectionStringSecondary": "",
+  "useSecondaryConnection": "false",
   "latencyMS": ""
 }
