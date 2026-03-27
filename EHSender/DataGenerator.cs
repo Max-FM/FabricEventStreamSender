@@ -11,7 +11,7 @@ namespace EHSender
     class DataGenerator
     {
         private const int Slope = 5;
-        private const double AnomalyProbability = 0.01; // 1% of records
+        private const double AnomalyProbability = 0.10; // 10% of records
         private static readonly Random _random = new Random();
 
         public string generateDateJson()
@@ -36,18 +36,34 @@ namespace EHSender
                 .RuleFor(d => d._partitionKey, (f, d) => d.deviceID + "-" + d.readingDate.Day)
                 .RuleFor(d => d.readingLatitude, f => f.Random.Decimal(-90, 90))
                 .RuleFor(d => d.readingLongitude, f => f.Random.Decimal(-180, 180))
+                // Pressure: normal 90-110, anomaly high 200-600, anomaly low 0-40
                 .RuleFor(d => d.readingPressure, (f, d) =>
                 {
-                    decimal basePressure = Slope * d.readingLatitude + f.Random.Decimal(0, 20);
-                    return isAnomaly
-                        ? basePressure + f.Random.Decimal(100, 500)
-                        : basePressure;
+                    if (isAnomaly)
+                    {
+                        // 50% chance high, 50% chance low anomaly
+                        if (_random.NextDouble() < 0.5)
+                        {
+                            // High anomaly
+                            return f.Random.Decimal(200, 600); // 200-600
+                        }
+                        else
+                        {
+                            // Low anomaly
+                            return f.Random.Decimal(0, 40);
+                        }
+                    }
+                    else
+                    {
+                        return f.Random.Decimal(90, 110);
+                    }
                 })
+                // Level: normal 0-10, anomaly high 20-60
                 .RuleFor(d => d.readingLevel, (f, d) =>
                 {
-                    decimal baseLevel = Slope * d.readingLongitude + f.Random.Decimal(0, 20);
+                    decimal baseLevel = f.Random.Decimal(0, 10);
                     return isAnomaly
-                        ? baseLevel + f.Random.Decimal(100, 500)
+                        ? baseLevel + f.Random.Decimal(20, 50)
                         : baseLevel;
                 })
                 .RuleFor(d => d.deviceStatus, (f, d) => isAnomaly ? "A99" : f.Random.Replace("?##"));
